@@ -1,0 +1,154 @@
+"""可调参数。改这里即可融入你自己的经验，不必先改判断逻辑。"""
+
+import os
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+
+# 可由环境变量覆盖（安装包启动器会设置 DB_PATH / TDX_HOME）。
+HOST = os.environ.get("STOCKDECISION_HOST", os.environ.get("HOST", "127.0.0.1")).strip() or "127.0.0.1"
+PORT = int(os.environ.get("STOCKDECISION_PORT", os.environ.get("PORT", "8765")) or "8765")
+
+_default_db = ROOT / "data" / "market.db"
+DB_PATH = Path(os.environ.get("STOCKDECISION_DB_PATH", os.environ.get("DB_PATH", str(_default_db))))
+
+# 本机通达信安装目录（主要为 Windows）。macOS 通常无通达信，走备用主站。
+_default_tdx_fallback = r"D:\new_tdx" if sys.platform == "win32" else str(ROOT / "data" / "tdx-missing")
+_default_tdx = os.environ.get("STOCKDECISION_TDX_HOME", os.environ.get("TDX_HOME", _default_tdx_fallback))
+TDX_HOME = Path(_default_tdx)
+
+APP_DISPLAY_NAME = "买入时机"
+APP_DATA_DIRNAME = "买入时机"
+
+# 股票池初筛
+MIN_AMOUNT = 2e8  # 成交额，元
+MIN_CIRC_MV = 20e8
+MAX_CIRC_MV = 2000e8
+POOL_FACTOR_UNIVERSE = 400
+PULLBACK_LIMIT = 20
+BREAKOUT_LIMIT = 20
+WATCH_LIMIT = 15
+CANDIDATE_LIMIT = 20
+HOLD_LIMIT = 15
+LEADER_LIMIT = 15
+WEAK_CANDIDATE_LIMIT = 15
+WAVE2_LIMIT = 20
+# 候选：位置用比例，涨幅用百分数。1.5 表示 +1.5%。
+PICK_ABOVE_MA5 = 0.06
+PICK_RET_10D = 25.0
+PICK_RANGE_POS = 0.85
+PICK_PULSE_SHARE = 0.60
+PICK_BLOCK_PERSIST = ("走弱", "偏弱", "一日游", "背离", "涨满")
+# 续航 / 主线
+HOLD_MA10_BAND = 0.04
+HOLD_PCT_MIN = -2.0
+HOLD_PCT_MAX = 4.0
+HOLD_VOL_RATIO_MAX = 1.3
+LEADER_AMOUNT_PCT = 0.20
+LEADER_RET_5D_MIN = 0.0
+LEADER_RET_5D_MAX = 12.0
+LEADER_PCT_MIN = 0.0
+LEADER_PCT_MAX = 5.0
+LEADER_RANK = 0.40
+# 龙头二波：回调中等待
+WAVE2_MIN_LIMIT_DAYS = 3
+WAVE2_PULLBACK_MIN = 1
+WAVE2_PULLBACK_MAX = 5
+WAVE2_MAX_DRAWDOWN = 0.18
+WAVE2_START_PCT_MIN = 3.0
+WAVE2_START_PCT_MAX = 9.0
+WAVE2_START_VOL = 1.3
+WAVE2_RECLAIM = 0.95
+WAVE2_STARTED_LIMIT = 20
+# 高位放量滞涨（百分数 / 量比）
+STALL_RANGE_POS = 0.85
+STALL_DAY_PCT_MAX = 1.0
+STALL_VOL_RATIO = 1.8
+# 候选：量比 / 换手过高不进（换手无数据则跳过）
+PICK_VOL_RATIO_MAX = 3.5
+PICK_TURNOVER_MAX = 25.0
+
+# 大盘量能与环境分级（总纲强/震/弱）
+AMOUNT_SHRINK = 0.80
+AMOUNT_EXPAND = 1.25
+AMOUNT_DUMP = 1.15
+DUMP_PCT = -1.5
+CLIMAX_ZT = 80
+CLIMAX_RANGE_POS = 0.85
+CLIMAX_SHADOW = 0.45
+CLIMAX_STAGNANT_PCT = 0.4
+EARLY_SESSION_PROGRESS = 0.25
+ENV_STRONG_ZT = 50
+ENV_WEAK_DT = 40
+ENV_WEAK_ZT = 20
+ENV_POS_CAP_WEAK = 0.30
+ENV_POS_CAP_CHOP = 0.50
+ENV_POS_CAP_STRONG = 0.70
+AI_REPORT_ENABLED = True
+AI_REPORT_TIMEOUT_SEC = 20
+AI_REPORT_USE_TRADINGAGENTS = False
+
+# 板块
+SECTOR_WEAK_RANK = 0.60
+SECTOR_WEAK_PCT = -1.5
+SECTOR_EXTENDED_PCT = 5.0
+TOP_CONCEPTS = 15
+# 近 5 个交易日的持续性。涨跌幅用百分数，1.5 表示 +1.5%。
+SECTOR_LOOKBACK = 5
+SECTOR_MIN_DAYS = 3
+SECTOR_MIN_MEMBERS = 3
+SECTOR_BEAT_DAYS = 3
+SECTOR_TOP_RANK = 0.40
+SECTOR_TOP_DAYS = 2
+SECTOR_PULSE_RANK = 0.20
+SECTOR_BACK_RANK = 0.50
+SECTOR_PULSE_SHARE = 0.60
+SECTOR_FADE_RANK = 0.50
+SECTOR_RUN_PCT = 8.0
+SECTOR_RUN_RANK = 0.30
+SECTOR_RUN_TODAY_PCT = 1.5
+# 同花顺主板块：近 20 日相关性，成分股按成交额前 30% 才算核心。
+SECTOR_CORR_DAYS = 20
+SECTOR_CORR_MIN = 0.35
+SECTOR_CORR_OVERLAP = 10
+SECTOR_CORE_PCT = 0.30
+SECTOR_RANK_MIN = 30
+# 板块阶段粗分：近窗口累计涨幅（百分数）
+SECTOR_STAGE_RUN = 12.0
+SECTOR_STAGE_MILD = 4.0
+
+# 个股买点（涨跌幅用“百分数”，1.5 表示 +1.5%）
+PULLBACK_MA10_BAND = 0.03
+PULLBACK_PCT_MIN = -2.0
+PULLBACK_PCT_MAX = 4.0
+PULLBACK_VOL_RATIO_MAX = 1.2
+BREAKOUT_PCT_MIN = 2.0
+BREAKOUT_PCT_MAX = 6.0
+BREAKOUT_VOL_RATIO = 1.5
+CHASE_ABOVE_MA5 = 0.06
+CHASE_DAY_PCT = 7.0
+CHASE_10D_PCT = 25.0
+CHASE_10D_TODAY_PCT = 4.0
+RANGE_POS_HIGH = 0.85
+VWAP_CHASE = 0.02
+
+# 持仓出场（止损用百分数，5.0 表示 -5%）
+EXIT_STOP_PCT = 5.0
+EXIT_MAX_HOLD_DAYS = 5
+EXIT_GIVEBACK = 0.08  # 相对近20日高回撤，浮盈后兑现
+EXIT_PROFIT_MIN = 3.0  # 浮盈至少 +3% 才谈兑现
+EXIT_MA10_BREAK = 0.01  # 跌破 MA10 超过 1%
+EXIT_VOL_BREAK = 1.3
+
+# 刷新
+INDEX_TTL_SEC = 15
+SPOT_TTL_OPEN_SEC = 60
+SPOT_TTL_CLOSED_SEC = 300
+STALE_SEC = 90
+PAGE_POLL_MS = 15000
+STATS_MIN_SAMPLE = 8
+FACTOR_BATCH = 12
+
+DISCLAIMER = "规则辅助，不构成收益承诺。不下单，也不使用内幕消息。持仓卖点仅为提醒，须自行决策。"
+CLOSED_NOTE = "已收盘，信号基于收盘数据，下一交易日开盘前复核"

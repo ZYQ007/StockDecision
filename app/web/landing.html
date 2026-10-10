@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>买入时机 · 本机短线开仓助手</title>
+<meta name="description" content="本机规则助手：三道门复核 A 股 2 至 5 日开仓，全宽 Tab 工作台覆盖当下池、ETF 性价比与持仓卖点。不下单，不构成收益承诺。">
+<link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
+<style>
+  /* Design system: 买入时机 / landing. Dark OLED + green CTA. CJK: Noto Sans SC. */
+  @import url("https://fonts.bunny.net/css?family=ibm-plex-mono:400,500,600|noto-sans-sc:400,500,600,700&display=swap");
+
+  :root {
+    --color-primary: #0f172a;
+    --color-on-primary: #ffffff;
+    --color-secondary: #1e293b;
+    --color-accent: #22c55e;
+    --color-on-accent: #0f172a;
+    --color-background: #020617;
+    --color-foreground: #f8fafc;
+    --color-card: #0e1223;
+    --color-muted: #1a1e2f;
+    --color-muted-foreground: #94a3b8;
+    --color-border: #334155;
+    --color-destructive: #ef4444;
+    --color-ring: #ffffff;
+    --wait: #eab308;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 48px;
+    --space-3xl: 64px;
+    --radius: 10px;
+    --font: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+    --mono: "IBM Plex Mono", Consolas, monospace;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --header-h: 64px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-padding-top: var(--header-h); }
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    font-family: var(--font);
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--color-foreground);
+    background: var(--color-background);
+  }
+  a { color: inherit; text-decoration: none; }
+  button, a.btn { cursor: pointer; font: inherit; }
+
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    height: var(--header-h);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 clamp(16px, 4vw, 40px);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+    background: color-mix(in srgb, var(--color-background) 88%, transparent);
+  }
+  @supports (backdrop-filter: blur(12px)) {
+    .nav { backdrop-filter: blur(14px) saturate(140%); }
+  }
+  .nav-brand {
+    font-weight: 700;
+    font-size: 1.125rem;
+    letter-spacing: 0.02em;
+  }
+  .nav-actions { display: flex; gap: 10px; align-items: center; }
+  .nav-link {
+    color: var(--color-muted-foreground);
+    font-size: 0.9rem;
+    padding: 8px 10px;
+    border-radius: 8px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    transition: color 0.2s var(--ease);
+  }
+  .nav-link:hover { color: var(--color-foreground); }
+  .nav-link:focus-visible,
+  .btn:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 3px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 18px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-weight: 650;
+    transition: transform 0.15s var(--ease), filter 0.2s var(--ease), background 0.2s var(--ease);
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary {
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+  }
+  .btn-primary:hover { filter: brightness(1.06); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--color-foreground);
+    border-color: var(--color-border);
+  }
+  .btn-ghost:hover { background: var(--color-muted); }
+
+  .hero {
+    position: relative;
+    min-height: calc(100dvh - var(--header-h));
+    display: grid;
+    align-items: stretch;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(900px 480px at 78% 18%, rgb(34 197 94 / 0.16), transparent 55%),
+      radial-gradient(700px 420px at 12% 80%, rgb(56 189 248 / 0.08), transparent 50%),
+      linear-gradient(165deg, #020617 0%, #0b1224 48%, #020617 100%);
+  }
+  .hero-bg::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgb(148 163 184 / 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(148 163 184 / 0.05) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: linear-gradient(180deg, #000 20%, transparent 92%);
+  }
+  .hero-inner {
+    width: min(1200px, 100%);
+    margin: 0 auto;
+    padding: clamp(24px, 5vw, 56px) clamp(16px, 4vw, 40px) clamp(40px, 6vw, 72px);
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: clamp(28px, 5vw, 56px);
+    align-items: center;
+  }
+  .hero-copy h1 {
+    margin: 0 0 14px;
+    font-size: clamp(2.1rem, 4.6vw, 3.4rem);
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    font-weight: 700;
+    max-width: 12ch;
+  }
+  .hero-copy p {
+    margin: 0 0 22px;
+    color: var(--color-muted-foreground);
+    font-size: 1.05rem;
+    max-width: 38ch;
+  }
+  .hero-cta { display: flex; flex-wrap: wrap; gap: 10px; }
+
+  .product-stage {
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    background: linear-gradient(180deg, #0e1223 0%, #0a0f1c 100%);
+    box-shadow: 0 24px 60px rgb(0 0 0 / 0.35);
+    padding: 16px;
+    min-height: 340px;
+  }
+  .stage-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 14px;
+    padding: 4px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--color-muted) 80%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+  }
+  .stage-tabs span {
+    padding: 6px 10px;
+    border-radius: 7px;
+    font-size: 11px;
+    color: var(--color-muted-foreground);
+    white-space: nowrap;
+  }
+  .stage-tabs span.on {
+    color: var(--color-foreground);
+    background: color-mix(in srgb, var(--color-accent) 16%, var(--color-muted));
+    font-weight: 650;
+    box-shadow: inset 0 -2px 0 var(--color-accent);
+  }
+  .product-stage .bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    color: var(--color-muted-foreground);
+    font-size: 12px;
+    font-family: var(--mono);
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    box-shadow: 0 0 0 4px rgb(34 197 94 / 0.15);
+  }
+  .stamp-row {
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    gap: 14px;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .stamp-box {
+    display: grid;
+    place-items: center;
+    height: 88px;
+    border: 2px solid var(--wait);
+    border-radius: 8px;
+    color: var(--wait);
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+  }
+  .stamp-meta strong {
+    display: block;
+    font-size: 1.05rem;
+    margin-bottom: 4px;
+  }
+  .stamp-meta span {
+    color: var(--color-muted-foreground);
+    font-size: 0.9rem;
+  }
+  .gate-list { list-style: none; margin: 0; padding: 0; }
+  .gate-list li {
+    display: grid;
+    grid-template-columns: 48px 40px 1fr;
+    gap: 8px;
+    padding: 10px 0;
+    border-top: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+    font-size: 0.9rem;
+  }
+  .gate-list .ok { color: #ef4444; font-weight: 650; }
+  .gate-list .mid { color: var(--wait); font-weight: 650; }
+  .gate-list .tag { color: var(--color-muted-foreground); }
+
+  section.block {
+    width: min(1100px, 100%);
+    margin: 0 auto;
+    padding: var(--space-3xl) clamp(16px, 4vw, 40px);
+  }
+  section.block h2 {
+    margin: 0 0 10px;
+    font-size: clamp(1.5rem, 2.6vw, 2rem);
+    letter-spacing: -0.02em;
+    max-width: 20ch;
+  }
+  section.block > .lead {
+    margin: 0 0 28px;
+    color: var(--color-muted-foreground);
+    max-width: 52ch;
+  }
+
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--color-border);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .steps article {
+    background: var(--color-card);
+    padding: 22px 20px;
+    min-height: 160px;
+  }
+  .steps .n {
+    font-family: var(--mono);
+    color: var(--color-accent);
+    font-size: 0.85rem;
+    margin-bottom: 10px;
+  }
+  .steps h3 {
+    margin: 0 0 8px;
+    font-size: 1.1rem;
+  }
+  .steps p {
+    margin: 0;
+    color: var(--color-muted-foreground);
+    font-size: 0.95rem;
+  }
+
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 36px;
+    align-items: start;
+  }
+  .feature-rows {
+    display: grid;
+    gap: 0;
+  }
+  .feature-rows article {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 14px;
+    padding: 18px 0;
+    border-top: 1px solid color-mix(in srgb, var(--color-border) 65%, transparent);
+  }
+  .feature-rows article:last-child { border-bottom: 1px solid color-mix(in srgb, var(--color-border) 65%, transparent); }
+  .feature-rows svg {
+    width: 24px;
+    height: 24px;
+    margin-top: 2px;
+    color: var(--color-accent);
+  }
+  .feature-rows h3 { margin: 0 0 4px; font-size: 1.05rem; }
+  .feature-rows p { margin: 0; color: var(--color-muted-foreground); font-size: 0.95rem; }
+
+  .rail {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .rail article {
+    padding: 20px 18px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-card);
+    min-height: 140px;
+  }
+  .rail .n {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--color-accent);
+    margin-bottom: 8px;
+  }
+  .rail h3 { margin: 0 0 8px; font-size: 1.05rem; }
+  .rail p { margin: 0; color: var(--color-muted-foreground); font-size: 0.92rem; }
+
+  .trust {
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-card);
+  }
+  .trust .inner {
+    width: min(900px, 100%);
+    margin: 0 auto;
+    padding: var(--space-2xl) clamp(16px, 4vw, 40px);
+  }
+  .trust h2 { margin: 0 0 10px; font-size: 1.35rem; }
+  .trust p {
+    margin: 0;
+    color: var(--color-muted-foreground);
+    max-width: 65ch;
+  }
+
+  .cta-band {
+    text-align: left;
+    padding: var(--space-3xl) clamp(16px, 4vw, 40px) calc(var(--space-3xl) + 8px);
+  }
+  .cta-band .box {
+    width: min(1100px, 100%);
+    margin: 0 auto;
+    padding: clamp(28px, 4vw, 40px);
+    border-radius: 16px;
+    border: 1px solid var(--color-border);
+    background:
+      radial-gradient(600px 240px at 10% 0%, rgb(34 197 94 / 0.12), transparent 60%),
+      var(--color-card);
+  }
+  .cta-band h2 {
+    margin: 0 0 10px;
+    font-size: clamp(1.5rem, 2.4vw, 2rem);
+  }
+  .cta-band p {
+    margin: 0 0 20px;
+    color: var(--color-muted-foreground);
+    max-width: 46ch;
+  }
+
+  footer {
+    padding: 20px clamp(16px, 4vw, 40px) 32px;
+    color: var(--color-muted-foreground);
+    font-size: 0.85rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    justify-content: space-between;
+    border-top: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-copy, .product-stage, .steps article, .feature-rows article, .rail article {
+      animation: rise 0.55s var(--ease) both;
+    }
+    .product-stage { animation-delay: 0.08s; }
+    .steps article:nth-child(2) { animation-delay: 0.06s; }
+    .steps article:nth-child(3) { animation-delay: 0.12s; }
+    .rail article:nth-child(2) { animation-delay: 0.06s; }
+    .rail article:nth-child(3) { animation-delay: 0.12s; }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  @media (max-width: 900px) {
+    .hero-inner { grid-template-columns: 1fr; padding-top: 28px; }
+    .hero-copy h1 { max-width: none; }
+    .steps, .rail { grid-template-columns: 1fr; }
+    .split { grid-template-columns: 1fr; gap: 16px; }
+    .nav-link.desktop-only { display: none; }
+    .stage-tabs span { font-size: 10px; padding: 5px 7px; }
+  }
+</style>
+</head>
+<body>
+  <header class="nav">
+    <a class="nav-brand" href="/">买入时机</a>
+    <div class="nav-actions">
+      <a class="nav-link desktop-only" href="#how">三道门</a>
+      <a class="nav-link desktop-only" href="#workspace">工作台</a>
+      <a class="nav-link desktop-only" href="#features">能看什么</a>
+      <a class="btn btn-primary" href="/app">打开助手</a>
+    </div>
+  </header>
+
+  <section class="hero" aria-label="首页主视觉">
+    <div class="hero-bg" aria-hidden="true"></div>
+    <div class="hero-inner">
+      <div class="hero-copy">
+        <h1>买入时机</h1>
+        <p>本机全宽工作台：三道门复核 2 至 5 日开仓，顺便盯当下池、ETF 性价比与持仓卖点。</p>
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="/app">打开助手</a>
+          <a class="btn btn-ghost" href="#how">看怎么判断</a>
+        </div>
+      </div>
+      <aside class="product-stage" aria-label="产品工作台示意">
+        <div class="stage-tabs" aria-hidden="true">
+          <span class="on">查这一只</span>
+          <span>最近可买</span>
+          <span>持仓</span>
+          <span>当下池</span>
+          <span>ETF</span>
+          <span>统计</span>
+        </div>
+        <div class="bar">
+          <span>三道门示意 · 本机</span>
+          <span class="dot" title="本地运行" aria-hidden="true"></span>
+        </div>
+        <div class="stamp-row">
+          <div class="stamp-box">观望</div>
+          <div class="stamp-meta">
+            <strong>位置不合适</strong>
+            <span>等回到观察价再看</span>
+          </div>
+        </div>
+        <ul class="gate-list">
+          <li><span class="tag">大盘</span><span class="ok">过</span><span>指数在线，量能未过冷</span></li>
+          <li><span class="tag">板块</span><span class="ok">过</span><span>主板块近几日仍连续</span></li>
+          <li><span class="tag">个股</span><span class="mid">不过</span><span>还没形成回踩或合格突破</span></li>
+        </ul>
+      </aside>
+    </div>
+  </section>
+
+  <section class="block" id="how">
+    <h2>三道门，说清能不能买</h2>
+    <p class="lead">先否决再买点。大盘、板块、个股依次过关，结论只有可买、观望、不买——规则裁决，不靠模型临场改口。</p>
+    <div class="steps">
+      <article>
+        <div class="n">大盘</div>
+        <h3>量能与情绪</h3>
+        <p>防守不做新开仓，高潮不追突破，避免只看个股涨跌。</p>
+      </article>
+      <article>
+        <div class="n">板块</div>
+        <h3>主线是否连续</h3>
+        <p>看近几日持续性，一日游、涨满、背离会拦住可买。</p>
+      </article>
+      <article>
+        <div class="n">个股</div>
+        <h3>买点是否到位</h3>
+        <p>回踩、突破、续航、主线四类买点；追高与脉冲直接否决。</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="block" id="workspace">
+    <h2>一个任务占满一屏</h2>
+    <p class="lead">助手页用主导航 Tab 切换任务，告别六块卡片叠罗汉；大盘条与告警常驻。</p>
+    <div class="rail">
+      <article>
+        <div class="n">01</div>
+        <h3>查这一只</h3>
+        <p>判断、三道门、下一步与九段研报旁路摘要；结论需手动点判断，不自动刷掉。</p>
+      </article>
+      <article>
+        <div class="n">02</div>
+        <h3>池子与归因</h3>
+        <p>当下池分组盯盘，最近可买回填 1/3/5 日收益；样本不足不宣称胜率。</p>
+      </article>
+      <article>
+        <div class="n">03</div>
+        <h3>ETF 与持仓</h3>
+        <p>主流 ETF 看性价比与宽基关注；已买票记入后看出场建议，顶部可提醒卖点。</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="block" id="features">
+    <div class="split">
+      <div>
+        <h2>池子、ETF、卖点提醒</h2>
+        <p class="lead">个股约 400 只成交额池与 ETF 白名单分开；持仓提醒不等于下单指令。</p>
+      </div>
+      <div class="feature-rows">
+        <article>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4 19V5M4 19h16M8 15l3-4 3 2 5-7"/></svg>
+          <div>
+            <h3>候选与弱候选</h3>
+            <p>趋势、板块、资金与相对强弱一起过；缺资金流单独标弱候选。</p>
+          </div>
+        </article>
+        <article>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>
+          <div>
+            <h3>四种可买分列</h3>
+            <p>回踩、刚突破、续航、主线分开看，硬否决仍优先。</p>
+          </div>
+        </article>
+        <article>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M3 12h18M12 3v18M7 7l10 10M17 7 7 17"/></svg>
+          <div>
+            <h3>ETF 主流池</h3>
+            <p>宽基关注、性价比、资金活跃；分档不用个股「可买」，宽基救市敏感只是经验标签。</p>
+          </div>
+        </article>
+        <article>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 3v18M5 8l7-5 7 5M5 16l7 5 7-5"/></svg>
+          <div>
+            <h3>持仓卖点提醒</h3>
+            <p>记入成本与止损后看出场建议；触及建议卖出时顶部提醒，须自行决策。</p>
+          </div>
+        </article>
+        <article>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          <div>
+            <h3>龙头二波模式</h3>
+            <p>连板后温和回调、仍在等二波的票单独成表，不等于自动可买。</p>
+          </div>
+        </article>
+        <article>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h13"/></svg>
+          <div>
+            <h3>最近可买归因</h3>
+            <p>记下买点与板块，并在后续交易日回填 1 / 3 / 5 日收益。</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="trust" id="trust">
+    <div class="inner">
+      <h2>边界说在前面</h2>
+      <p>规则辅助，不构成收益承诺。不下单，也不使用内幕消息。数据来自通达信主站与同花顺网页等公开来源；缺数时页面会写明，不拿空数放行。九段研报与 ETF「救市敏感」均为旁路参考，冲突以三道门规则为准。</p>
+    </div>
+  </section>
+
+  <section class="cta-band">
+    <div class="box">
+      <h2>在本机打开全宽工作台</h2>
+      <p>查一只、刷池子、看 ETF 性价比或记持仓——一次只做一件事。</p>
+      <a class="btn btn-primary" href="/app">打开助手</a>
+    </div>
+  </section>
+
+  <footer>
+    <span>买入时机 · 本机网页助手</span>
+    <span>规则辅助，不构成收益承诺</span>
+  </footer>
+</body>
+</html>
